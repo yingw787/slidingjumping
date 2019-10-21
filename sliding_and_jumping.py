@@ -77,6 +77,24 @@ class SlidingJumping():
     
     def make_move(self, i, move_type, move_direction):
         self.move_history.append((i, move_type, move_direction))
+        temp = list(self.board)
+        if move_type == 'slide':
+            if move_direction == 'left':
+                temp[i-1], temp[i] = temp[i], temp[i-1]
+            elif move_direction == 'right':
+                temp[i+1], temp[i] = temp[i], temp[i+1]
+            else:
+                pass
+        elif move_type == 'jump':
+            if move_direction == 'left':
+                temp[i-2], temp[i] = temp[i], temp[i-2]
+            elif move_direction == 'right':
+                temp[i+2], temp[i] = temp[i], temp[i+2]
+            else:
+                pass
+        else:
+            pass
+        self.board = ''.join(temp)
 
     def game_over(self):
         return self.start_state == self.board[::-1]

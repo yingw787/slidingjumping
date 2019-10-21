@@ -23,7 +23,6 @@ class TestAPIRouteUnitTests(unittest.TestCase):
         res = game.gen_moves()
         self.assertEqual(res, [(0, 't', 'jump', 'right')])
 
-
         game = SlidingJumping('th')
         res = game.gen_moves()
         self.assertEqual(res, [])
@@ -51,6 +50,26 @@ class TestAPIRouteUnitTests(unittest.TestCase):
         game.make_move(0, 'jump', 'right')
         self.assertEqual(game.move_history, [(2, 'slide', 'left'), (0, 'jump', 'right')])
 
+    def test_make_move(self):
+        game = SlidingJumping('t_h')
+        game.make_move(0, 'slide', 'right')
+        self.assertEqual(game.move_history, [(0, 'slide', 'right')])
+        self.assertEqual(game.board, '_th')
+
+        game = SlidingJumping('th_')
+        game.make_move(0, 'jump', 'right')
+        self.assertEqual(game.move_history, [(0, 'jump', 'right')])
+        self.assertEqual(game.board, '_ht')
+
+        game = SlidingJumping('t_h')
+        game.make_move(2, 'slide', 'left')
+        self.assertEqual(game.move_history, [(2, 'slide', 'left')])
+        self.assertEqual(game.board, 'th_')
+        
+        game = SlidingJumping('_th')
+        game.make_move(2, 'jump', 'left')
+        self.assertEqual(game.move_history, [(2, 'jump', 'left')])
+        self.assertEqual(game.board, 'ht_')
 
     def test_game_over(self):
 
