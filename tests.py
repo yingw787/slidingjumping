@@ -97,3 +97,7 @@ class TestAPIRouteUnitTests(unittest.TestCase):
         game = SlidingJumping('tt_hh')
         game.board = 'hh_tt'
         self.assertEqual(game.game_over(), True)
+
+if __name__ == '__main__':
+    unittest.main()
+    
