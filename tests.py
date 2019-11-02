@@ -1,4 +1,6 @@
 from sliding_and_jumping import SlidingJumping
+from sliding_and_jumping import gen_state_tree, \
+    play_all_possible_games, enum_states, traverse_state_tree
 import unittest
 
 class TestAPIRouteUnitTests(unittest.TestCase):
@@ -31,7 +33,7 @@ class TestAPIRouteUnitTests(unittest.TestCase):
         res = game.gen_moves()
         self.assertEqual(res, [])
 
-        game = SlidingJumping()
+        game = SlidingJumping('ttt_hh')
         res = game.gen_moves()
         self.assertEqual(res, [(2, 't', 'slide', 'right'), (4, 'h', 'slide', 'left')])
 
@@ -97,6 +99,36 @@ class TestAPIRouteUnitTests(unittest.TestCase):
         game = SlidingJumping('tt_hh')
         game.board = 'hh_tt'
         self.assertEqual(game.game_over(), True)
+
+    def test_gen_state_tree(self):
+        tree = gen_state_tree('t_h')
+        self.assertIn('t_h', tree)
+        self.assertIn('_th', tree)
+        self.assertIn('th_', tree)
+        self.assertIn('h_t', tree)
+        self.assertEqual(tree['h_t'], enum_states[2])
+        self.assertIn('_th', tree['t_h'])
+        self.assertIn('th_', tree['t_h'])
+        self.assertEqual(len(tree), 6)
+
+        tree = gen_state_tree('tt_h', False)
+        self.assertIn('h_tt', tree)
+        self.assertIn('h_tt', tree['_htt'])
+        self.assertEqual(len(tree), 11)
+        self.assertNotIn(set(), tree.values())
+        self.assertEqual(tree['_tth'], enum_states[1])
+        
+        tree = gen_state_tree('ttt_hhh')
+        self.assertIn('hhh_ttt', tree)
+        self.assertEqual(tree['hhh_ttt'], enum_states[2])
+
+    def test_traverse_state_tree(self):
+        tree = gen_state_tree('t_h', False)
+        ts = list(traverse_state_tree(tree, 't_h', ['t_h']))
+        self.assertIsInstance(ts, list)
+        self.assertEqual(len(ts), 2)
+        self.assertIn(['t_h', '_th', 'ht_', 'h_t', 'VICTORY'], ts)
+        self.assertIn(['t_h', 'th_', '_ht', 'h_t', 'VICTORY'], ts)
 
 if __name__ == '__main__':
     unittest.main()
