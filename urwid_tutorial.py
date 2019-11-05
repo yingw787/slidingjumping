@@ -1,93 +1,84 @@
 import urwid
 
-class MenuButton(urwid.Button):
+class ActionButton(urwid.Button):
     def __init__(self, caption, callback):
-        super(MenuButton, self).__init__("")
+        super(ActionButton, self).__init__("")
         urwid.connect_signal(self, 'click', callback)
-        self._w = urwid.AttrMap(
-            urwid.SelectableIcon(
-                ['   \N{BULLET}', caption],
-                2
-            ),
-            None,
-            'selected'
+        self._w = urwid.AttrMap(urwid.SelectableIcon(caption, 1),
+        None, focus_map='reversed')
+
+class Place(urwid.WidgetWrap):
+    def __init__(self, name, choices):
+        super(Place, self).__init__(
+            ActionButton([' > go to ', name], self.enter_place)
         )
+        self.heading = urwid.Text(['\nLocation: ', name, '\n'])
+        self.choices = choices
+        for child in choices:
+            getattr(child, 'choices', []).insert(0, self)
 
-class SubMenu(urwid.WidgetWrap):
-    def __init__(self, caption, choices):
-        super(SubMenu, self).__init__(MenuButton(
-            [caption, '\N{HORIZONTAL ELLIPSIS}'],
-            self.open_menu
-        ))
-        line = urwid.Divider('\N{LOWER ONE QUARTER BLOCK}')
-        listbox = urwid.ListBox(urwid.SimpleFocusListWalker([
-            urwid.AttrMap(urwid.Text(['\n  ', caption]), 'heading'),
-            urwid.AttrMap(line, 'line'),
-            urwid.Divider()
-        ] + choices + [urwid.Divider()]))
-        self.menu = urwid.AttrMap(listbox, 'options')
+    def enter_place(self, button):
+        game.update_place(self)
 
-    def open_menu(self, button):
-        top.open_box(self.menu)
-
-class Choice(urwid.WidgetWrap):
-    def __init__(self, caption):
-        super(Choice, self).__init__(
-            MenuButton(caption, self.item_chosen)
+class Thing(urwid.WidgetWrap):
+    def __init__(self, name):
+        super(Thing, self).__init__(
+            ActionButton([' * take ', name], self.take_thing)
         )
-        self.caption = caption
+        self.name = name
 
-    def item_chosen(self, button):
-        response = urwid.Text(['  You chose ', self.caption, '\n'])
-        done = MenuButton('Ok', exit_program)
-        response_box = urwid.Filler(urwid.Pile([response, done]))
-        top.open_box(urwid.AttrMap(response_box, 'options'))
+    def take_thing(self, button):
+        self._w = urwid.Text(f' - {self.name}')
+        game.take_thing(self)
 
-def exit_program(key):
+def exit_program(button):
     raise urwid.ExitMainLoop()
 
-menu_top = SubMenu('Main Menu', [
-    SubMenu('Applications', [
-        SubMenu('Accessories', [
-            Choice('Text Editor'),
-            Choice('Terminal')
+map_top = Place('porch', [
+    Place('kitchen', [
+        Place('refrigerator', []),
+        Place('cupboard', [
+            Thing('jug')
         ])
     ]),
-    SubMenu('System', [
-        SubMenu('Preferences', [
-            Choice('Appearance')
+    Place('garden', [
+        Place('tree', [
+            Thing('lemon'),
+            Thing('bird')
+        ])
+    ]),
+    Place('street', [
+        Place('store', [
+            Thing('sugar')
         ]),
-        Choice('Lock Screen')
+        Place('lake', [
+            Place('beach', [])
+        ])
     ])
 ])
 
-palette = [
-    (None, 'light gray', 'black'),
-    ('heading', 'black', 'light gray'),
-    ('line', 'black', 'light gray'),
-    ('options', 'dark gray', 'black'),
-    ('focus heading', 'white', 'dark red'),
-    ('focus line', 'black', 'dark red'),
-    ('focus options', 'black', 'light gray'),
-    ('selected', 'white', 'dark blue')
-]
-focus_map = {
-    'heading': 'focus heading',
-    'options': 'focus options',
-    'line': 'focus line'
-}
-
-class HorizontalBoxes(urwid.Columns):
+class AdventureGame(object):
     def __init__(self):
-        super(HorizontalBoxes, self).__init__([], dividechars=1)
+        self.log = urwid.SimpleFocusListWalker([])
+        self.top = urwid.ListBox(self.log)
+        self.inventory = set()
+        self.update_place(map_top)
 
-    def open_box(self, box):
-        if self.contents:
-            del self.contents[self.focus_position + 1:]
-        self.contents.append((urwid.AttrMap(box, 'options', focus_map),
-        self.options('given', 24)))
-        self.focus_position = len(self.contents) - 1
+    def update_place(self, place):
+        if self.log:
+            self.log[-1] = urwid.WidgetDisable(self.log[-1])
+        self.log.append(urwid.Pile([place.heading] + place.choices))
+        self.top.focus_position = len(self.log) - 1
+        self.place = place
 
-top = HorizontalBoxes()
-top.open_box(menu_top.menu)
-urwid.MainLoop(urwid.Filler(top, 'middle', 10), palette).run()
+    def take_thing(self, thing):
+        self.inventory.add(thing.name)
+        if self.inventory >= set(['sugar', 'lemon', 'jug']):
+            response = urwid.Text('You can make lemonade!\n')
+            done = ActionButton(' - Joy', exit_program)
+            self.log[:] = [response, done]
+        else:
+            self.update_place(self.place)
+
+game = AdventureGame()
+urwid.MainLoop(game.top, palette=[('reversed', 'standout', '')]).run()
