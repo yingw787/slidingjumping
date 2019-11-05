@@ -42,7 +42,7 @@ class SlidingJumping():
             if move_direction == 'left':
                 if i <= 1:
                     return False
-                elif self.board[i-1] == self.board[i]: 
+                elif self.board[i-1] == self.board[i]:
                     return False
                 elif self.board[i-1] == '_':
                     return False
@@ -55,7 +55,7 @@ class SlidingJumping():
             elif move_direction == 'right':
                 if i >= len(self.board)-1:
                     return False
-                elif self.board[i+1] == self.board[i]: 
+                elif self.board[i+1] == self.board[i]:
                     return False
                 elif self.board[i+1] == '_':
                     return False
@@ -76,7 +76,7 @@ class SlidingJumping():
                     if self.is_valid_move(i, mt, md):
                         moves.append((i, self.board[i], mt, md))
         return moves
-    
+
     def make_move(self, i, move_type, move_direction):
         self.move_history.append((i, move_type, move_direction))
         temp = list(self.board)
@@ -124,7 +124,7 @@ def gen_state_tree(start_board = 't_h', verbose = False):
             if game.game_over():
                 tree[new_board] = enum_states[2]
                 continue
-            
+
             if new_board not in tree:
                 unvisited_states.append(new_board)
             else:
@@ -150,7 +150,7 @@ def play_all_possible_games(start_board = 'ttt_hhh'):
         g = games.pop(0)
         moves = g.gen_moves()
         for m in moves:
-            new_g = SlidingJumping(board=g.board[:], start_board = start_board[:], 
+            new_g = SlidingJumping(board=g.board[:], start_board = start_board[:],
                 move_history=g.move_history[:])
             new_g.make_move(m[0], m[2], m[3])
             if new_g.game_over():
@@ -175,7 +175,7 @@ def make_traversals(start_state = 't_h'):
     print('valid games:')
     for t in ts:
         print('{} ({} in {} moves)'.format(t, 'won' if t[-1] == enum_states[2] else 'lost', len(t)))
-    
+
 def aggregate_move_history(game):
     res = dict()
     for move in game.move_history:
@@ -193,5 +193,3 @@ if __name__ == '__main__':
     start_state = 't_h'
     play_all_possible_games(start_state)
     make_traversals(start_state)
-    
-    
