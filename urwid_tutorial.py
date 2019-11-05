@@ -5,14 +5,30 @@ def exit_on_q(key):
         raise urwid.ExitMainLoop()
 
 palette = [
-    ('banner', 'black', 'light gray'),
-    ('streak', 'black', 'dark red'),
-    ('bg', 'black', 'dark blue')
+    ('banner', '', '', '', '#ffa', '#60d'),
+    ('streak', '', '', '', 'g50', '#60a'),
+    ('inside', '', '', '', 'g38', '#808'),
+    ('outside', '', '', '', 'g27', '#a06'),
+    ('bg', '', '', '', 'g7', '#d06')
 ]
 
+placeholder = urwid.SolidFill()
+loop = urwid.MainLoop(
+    placeholder,
+    palette,
+    unhandled_input=exit_on_q
+)
+loop.screen.set_terminal_properties(colors=256)
+loop.widget = urwid.AttrMap(placeholder, 'bg')
+loop.widget.original_widget = urwid.Filler(urwid.Pile([]))
+
+div = urwid.Divider()
+outside = urwid.AttrMap(div, 'outside')
+inside = urwid.AttrMap(div, 'inside')
 txt = urwid.Text(('banner', 'Hello World'), align='center')
-map1 = urwid.AttrMap(txt, 'streak')
-fill = urwid.Filler(map1)
-map2 = urwid.AttrMap(fill, 'bg')
-loop = urwid.MainLoop(map2, palette, unhandled_input=exit_on_q)
+streak = urwid.AttrMap(txt, 'streak')
+pile = loop.widget.base_widget
+for item in [outside, inside, streak, inside, outside]:
+    pile.contents.append((item, pile.options()))
+
 loop.run()
