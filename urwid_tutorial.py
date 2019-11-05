@@ -1,35 +1,28 @@
 import urwid
 
-def question():
-    return urwid.Pile([
-        urwid.Edit((
-            'I say',
-            'What is your name?\n'
-        ))
-    ])
+choices = 'Chapman Cleese Gilliam Idle Jones Palin'.split()
 
-def answer(name):
-    return urwid.Text((
-        'I say',
-        'Nice to meet you, ' + name + '\n'
-    ))
+def exit_program(button):
+    raise urwid.ExitMainLoop()
 
-class ConversationListBox(urwid.ListBox):
-    def __init__(self):
-        body = urwid.SimpleFocusListWalker([question()])
-        super(ConversationListBox, self).__init__(body)
+def item_chosen(button, choice):
+    response = urwid.Text(['You chose ', choice, '\n'])
+    done = urwid.Button('Ok')
+    urwid.connect_signal(done, 'click', exit_program)
+    main.original_widget = urwid.Filler(urwid.Pile([response, urwid.AttrMap(done, None, focus_map='reversed')]))
 
-    def keypress(self, size, key):
-        key = super(ConversationListBox, self).keypress(size, key)
-        if key != 'enter':
-            return key
-        name = self.focus[0].edit_text
-        if not name:
-            raise urwid.ExitMainLoop()
-        self.focus.contents[1:] = [(answer(name), self.focus.options())]
-        pos = self.focus_position
-        self.body.insert(pos + 1, question())
-        self.focus_position = pos + 1
+def menu(title, choices):
+    body = [urwid.Text(title), urwid.Divider()]
+    for c in choices:
+        button = urwid.Button(c)
+        urwid.connect_signal(button, 'click', item_chosen, c)
+        body.append(urwid.AttrMap(button, None, focus_map='reversed'))
+    return urwid.ListBox(urwid.SimpleFocusListWalker(body))
 
-palette = [('I say', 'default,bold', 'default')]
-urwid.MainLoop(ConversationListBox(), palette).run()
+main = urwid.Padding(menu('Pythons', choices), left=2, right=2)
+top = urwid.Overlay(main, urwid.SolidFill('\N{MEDIUM SHADE}'),
+    align='center', width=('relative', 60),
+    valign='middle', height=('relative', 60),
+    min_width=20, min_height=9)
+
+urwid.MainLoop(top, palette=[('reversed', 'standout', '')]).run()
