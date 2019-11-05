@@ -1,20 +1,35 @@
 import urwid
 
-palette = [('I say', 'default,bold', 'default', 'bold')]
-ask = urwid.Edit(('I say', 'What is your name?\n'))
-reply = urwid.Text('')
-button = urwid.Button('Exit')
-div = urwid.Divider()
-pile = urwid.Pile([ask, div, reply, div, button])
-top = urwid.Filler(pile, valign='top')
+def question():
+    return urwid.Pile([
+        urwid.Edit((
+            'I say',
+            'What is your name?\n'
+        ))
+    ])
 
-def on_ask_change(edit, new_edit_text):
-    reply.set_text(('I say', f'Nice to meet you, {new_edit_text}'))
+def answer(name):
+    return urwid.Text((
+        'I say',
+        'Nice to meet you, ' + name + '\n'
+    ))
 
-def on_exit_clicked(button):
-    raise urwid.ExitMainLoop()
+class ConversationListBox(urwid.ListBox):
+    def __init__(self):
+        body = urwid.SimpleFocusListWalker([question()])
+        super(ConversationListBox, self).__init__(body)
 
-urwid.connect_signal(ask, 'change', on_ask_change)
-urwid.connect_signal(button, 'click', on_exit_clicked)
+    def keypress(self, size, key):
+        key = super(ConversationListBox, self).keypress(size, key)
+        if key != 'enter':
+            return key
+        name = self.focus[0].edit_text
+        if not name:
+            raise urwid.ExitMainLoop()
+        self.focus.contents[1:] = [(answer(name), self.focus.options())]
+        pos = self.focus_position
+        self.body.insert(pos + 1, question())
+        self.focus_position = pos + 1
 
-urwid.MainLoop(top, palette).run()
+palette = [('I say', 'default,bold', 'default')]
+urwid.MainLoop(ConversationListBox(), palette).run()
